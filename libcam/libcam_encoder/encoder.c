@@ -2404,25 +2404,22 @@ static encoder_video_context_t *encoder_video_init_vaapi(encoder_context_t *enco
 
 
     /* open codec*/
-   if ((ret = getLoadLibsInstance()->m_avcodec_open2(video_codec_data->codec_context,video_codec_data->codec,&video_codec_data->private_options)) < 0){
-        fprintf(stderr, "ENCODER: could not open video codec (%s): %i - using raw input\n", video_defaults->codec_name, ret);
+   if ((ret = getLoadLibsInstance()->m_avcodec_open2(
+                    video_codec_data->codec_context,
+                    video_codec_data->codec,
+                    &video_codec_data->private_options)) < 0){
+        fprintf(stderr, "ENCODER: could not open video codec (%s): %i - try soft codec after.\n", video_defaults->codec_name, ret);
+          
         free(video_codec_data->codec_context);
         video_codec_data->codec_context = NULL;
         video_codec_data->codec = 0;
-        /*we will use raw data so free the codec data*/
+        // release current codec data, remove set raw data
+        // we will use soft codec so free the codec data
         free(video_codec_data);
-        video_defaults = encoder_get_video_codec_defaults(0);
-        encoder_set_raw_video_input(encoder_ctx, video_defaults);
 
-        //alloc outbuf
-        if(enc_video_ctx->outbuf_size <= 0)
-         enc_video_ctx->outbuf_size = 240000;//1792
-        if(enc_video_ctx->outbuf != NULL)
-         free(enc_video_ctx->outbuf);
         is_vaapi =  HW_VAAPI_FAIL9;
         getAvutil()->m_av_buffer_unref(&hw_device_ctx);
         fprintf(stderr, "FAIL to encoder_video_init_vaapi:%d.\n", is_vaapi);
-        free(video_codec_data);
         return NULL;
     }
 
